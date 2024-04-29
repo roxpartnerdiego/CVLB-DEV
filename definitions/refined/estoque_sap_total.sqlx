@@ -2,6 +2,8 @@ config {
     tags:["cubo-estoque"]
 }
 
+TRUNCATE TABLE REFINED.ESTOQUE_SAP_TOTAL;
+
 INSERT INTO 
     `REFINED.ESTOQUE_SAP_TOTAL` (
 SELECT 

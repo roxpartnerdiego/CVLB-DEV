@@ -10,64 +10,73 @@ USING
   WITH
     TABELA AS (
     SELECT
-      DISTINCT werks,
-      mandt,
-      cdsis,
-      nupdv,
-      tpopr,
-      mvend,
-      dtopr,
-      ntran,
-      num_item02,
-      cod_merc_serv02,
-      tp_item02,
-      cod_ean02,
-      qtde_vendida02,
-      unidade_medida02,
-      vlr_unitario02,
-      vlr_tot_vd_itm02,
-      tp_desconto02,
-      vlr_desconto02,
-      tp_acrescimo02,
-      vlr_acrescimo02,
-      tp_despesas02,
-      vlr_despesas02,
-      tp_frete02,
-      vlr_frete02,
-      cod_transp02,
-      dt_entre_prev02,
-      dt_entre_efet02,
-      cod_promocao02,
-      cod_depto02,
-      cod_gru_merc02,
-      cod_vendedor02,
-      perc_comissao02,
-      vlr_comissao02,
-      num_pedido02,
-      item_pedido02,
-      obs_pedido02,
-      dir_fisc_icms02,
-      dir_fiscal_ipi02,
-      cfop02,
-      sit_trib02,
-      num_doc_ref02,
-      qtde_imposto02,
-      imei,
-      recordstamp
-    FROM
-        `RAW.sap_zposcst102` A
-    WHERE
-      PARTITIONTIME=(
+      DISTINCT * EXCEPT (dense_rank,
+        PARTITIONTIME)
+    FROM (
       SELECT
-        MAX(PARTITIONTIME)
+        ROW_NUMBER() OVER (PARTITION BY werks, ntran, num_item02, cod_merc_serv02, num_pedido02 ORDER BY PARTITIONTIME DESC) AS dense_rank,
+        werks,
+        mandt,
+        cdsis,
+        nupdv,
+        tpopr,
+        mvend,
+        dtopr,
+        ntran,
+        num_item02,
+        cod_merc_serv02,
+        tp_item02,
+        cod_ean02,
+        qtde_vendida02,
+        unidade_medida02,
+        vlr_unitario02,
+        vlr_tot_vd_itm02,
+        tp_desconto02,
+        vlr_desconto02,
+        tp_acrescimo02,
+        vlr_acrescimo02,
+        tp_despesas02,
+        vlr_despesas02,
+        tp_frete02,
+        vlr_frete02,
+        cod_transp02,
+        dt_entre_prev02,
+        dt_entre_efet02,
+        cod_promocao02,
+        cod_depto02,
+        cod_gru_merc02,
+        cod_vendedor02,
+        perc_comissao02,
+        vlr_comissao02,
+        num_pedido02,
+        item_pedido02,
+        obs_pedido02,
+        dir_fisc_icms02,
+        dir_fiscal_ipi02,
+        cfop02,
+        sit_trib02,
+        num_doc_ref02,
+        qtde_imposto02,
+        imei,
+        recordstamp,
+        PARTITIONTIME
+    FROM (
+      SELECT
+        DISTINCT A.*
       FROM
-        `RAW.sap_zposcst102`))
-  SELECT
-    *
-  FROM
-    TABELA) S
+        `RAW.sap_zposcst102` A ) )
+  WHERE
+    dense_rank = 1 )
+SELECT
+  *
+FROM
+  TABELA) S
 ON
   T.werks = S.werks
+  AND T.ntran = S.ntran
+  AND T.num_item02 = S.num_item02
+  AND T.cod_merc_serv02 = S.cod_merc_serv02
+  AND T.num_pedido02 = S.num_pedido02
   WHEN MATCHED THEN UPDATE SET 
   T.mandt = S.mandt,
   T.werks = S.werks,
@@ -159,7 +168,7 @@ INSERT
     num_doc_ref02,
     qtde_imposto02,
     imei,
-    recordstamp )
+    recordstamp  )
 VALUES
   ( S.mandt,
     S.werks,
